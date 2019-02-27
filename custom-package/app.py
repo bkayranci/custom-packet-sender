@@ -1,5 +1,4 @@
 from scapy.all import *
-import sys
 import argparse
 import re
 import ipaddress
