@@ -8,6 +8,7 @@ class CustomPackage(object):
     def __init__(self, **kwargs):
         self.__destination_addr = None
         self.__source_addr = None
+        self.__count = None
         self.__initial_ip_address(**kwargs)
 
     def _set_destination_addr(self, destination_addr):
@@ -51,24 +52,37 @@ class CustomPackage(object):
         else:
             self.__destination_addr = destination_addr
 
-    def __initial_ip_address(self, SOURCE=None, DESTINATION=None):
+    def __initial_ip_address(self, SOURCE=None, DESTINATION=None, COUNT=1):
         self.__initial_source_ip_control(SOURCE)
         self.__initial_destination_ip_control(DESTINATION)
+        self.__initial_count(COUNT)
+
+    def _set_count(self, count):
+        self.__count = count
+
+    def __initial_count(self, count):
+        if count < 1:
+            self._set_count(1)
+        else:
+            self._set_count(count)
 
     def __get_ip(self):
-        return IP(src=self._get_source_addr(), dst=self._get_destination_addr())
+        return IP(src=str(self._get_source_addr()), dst=str(self._get_destination_addr()))
 
     def __get_tcp(self, sport=80, dport=80):
         return TCP(sport=sport, dport=dport)
 
     def _get_packet(self):
         return self.__get_ip()/self.__get_tcp()
+    
+    def _get_count(self):
+        return self.__count
 
-    def send(self, times=1):
+    def send(self):
         packet = self._get_packet()
-        if times > 0:
-            for i in range(0, times):
-                send(packet)
+        print(self._get_count())
+        for i in range(0, self._get_count()):
+            send(packet)
 
 def admin_control():
     if os.getuid() != 0:
@@ -79,11 +93,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('--destination', '-d', dest='DESTINATION', action='store', default=None, type=str, help='Destination IP Address')
     parser.add_argument('--source', '-s', dest='SOURCE', action='store', default=None, type=str, help='Source IP Address')
+    parser.add_argument('--count', '-c', dest='COUNT', action='store', default=1, type=int, help='Send packet {COUNT} times')
 
     args = parser.parse_args()
     info = dict(args._get_kwargs())
-
     admin_control()
 
     package = CustomPackage(**info)
-    package.send(2)
+    package.send()
